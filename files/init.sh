@@ -94,14 +94,17 @@ EOF
   fi
 }
 
-activate_nginx_service(){
-  local sv_dir="/etc/sv/nginx"
+activate_service(){
   # """
   # Activate the given service.
   # """
+  local service=$1
+  local sv_dir="/etc/sv/$service"
 
-  _log "Activating nginx service ..."
-  ln -s $sv_dir /etc/service
+  _log "Activating $1 service ..."
+  if [ ! -h /etc/service/$service ]; then
+    ln -s $sv_dir /etc/service
+  fi
 }
 
 start_runit(){
@@ -121,7 +124,7 @@ main(){
   check_user $@
   configure_nginx $1
   configure_runit $1
-  activate_nginx_service
+  activate_service "nginx"
   start_runit
 }
 
