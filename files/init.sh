@@ -20,7 +20,9 @@ _debug()
 
 
 usage(){
-  #"""Usage."""
+  # """
+  # Usage.
+  # """
   echo "Usage: init.sh <username> <uid>"
   exit 1
 }
@@ -93,15 +95,19 @@ EOF
 }
 
 activate_nginx_service(){
-  #"""Active nginx service."""
   local sv_dir="/etc/sv/nginx"
+  # """
+  # Activate the given service.
+  # """
 
   _log "Activating nginx service ..."
   ln -s $sv_dir /etc/service
 }
 
 start_runit(){
-  #"""Start runit."""
+  # """
+  # Start runit.
+  # """
   _log "Starting runit ..."
   runsvdir /etc/service
 }
