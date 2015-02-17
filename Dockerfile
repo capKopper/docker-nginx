@@ -5,6 +5,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update
 RUN apt-get install runit wget -y
 
+# Add init script
 ADD files/init.sh /init.sh
 RUN chmod u+x /init.sh
 
