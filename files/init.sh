@@ -18,6 +18,11 @@ _debug()
   echo -e "$(date --iso-8601=s)${BLUE} (debug)${WHITE}:" $@
 }
 
+_warning(){
+  declare RED="\e[91m" WHITE="\e[39m"
+  echo -e "$(date --iso-8601=s)${RED} (warning)${WHITE}:" $@
+}
+
 
 usage(){
   # """
