@@ -56,12 +56,6 @@ configure_nginx(){
 
   _log "Configure nginx process to run with '$username' ..."
 
-  _debug "delete 'user' directive from nginx main config file"
-  sed -i 's/^user.*;$//g' /etc/nginx/nginx.conf
-
-  _debug "change nginx pid file location"
-  sed -i 's@^pid.*;$@pid /tmp/nginx.pid;@g' /etc/nginx/nginx.conf
-
   _debug "set default listen port to $listen_port"
   sed -i 's/listen.*80;$/listen 8080;/g' /etc/nginx/conf.d/default.conf
 
