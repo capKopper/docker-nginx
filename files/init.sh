@@ -2,8 +2,8 @@
 set -eo pipefail
 
 _log(){
-  declare BLUE="\e[32m" WHITE="\e[39m"
-  echo -e "$(date --iso-8601=s)${BLUE} (info)${WHITE}:" $@
+  declare BLUE="\e[32m" WHITE="\e[39m" BOLD="\e[1m" NORMAL="\e[0m"
+  echo -e "$(date --iso-8601=s)${BLUE}${BOLD} (info)${WHITE}:" $@${NORMAL}
 }
 
 _error(){
@@ -16,6 +16,11 @@ _debug()
 {
   declare BLUE="\e[36m" WHITE="\e[39m"
   echo -e "$(date --iso-8601=s)${BLUE} (debug)${WHITE}:" $@
+}
+
+_warning(){
+  declare RED="\e[91m" WHITE="\e[39m"
+  echo -e "$(date --iso-8601=s)${RED} (warning)${WHITE}:" $@
 }
 
 
@@ -47,18 +52,8 @@ configure_nginx(){
   # Configure nginx to run with the given user.
   # """"
   local username=$1
-  local listen_port="8080"
 
   _log "Configure nginx process to run with '$username' ..."
-
-  _debug "delete 'user' directive from nginx main config file"
-  sed -i 's/^user.*;$//g' /etc/nginx/nginx.conf
-
-  _debug "change nginx pid file location"
-  sed -i 's@^pid.*;$@pid /tmp/nginx.pid;@g' /etc/nginx/nginx.conf
-
-  _debug "set default listen port to $listen_port"
-  sed -i 's/listen.*80;$/listen 8080;/g' /etc/nginx/conf.d/default.conf
 
   _debug "change owner and group ($1:$1) for log and cache directories"
   chown -R $username:$username /var/log/nginx &&
@@ -94,6 +89,116 @@ EOF
   fi
 }
 
+configure_nginx_vhost(){
+  # """
+  # Configure nginx vhost(s).
+  #
+  # Use some environements variables (json format) to defined
+  # - one default vhost (normal or in redirect mode)
+  # - some additionnals vhosts
+  # """
+  local username=$1
+
+  _log "Configure nginx vhost(s) ..."
+
+  set_default_vhost "/tmp/nginx-tpl"
+  set_additionnal_vhosts "/tmp/nginx-tpl" $username
+}
+
+set_default_vhost(){
+  # """
+  # Default vhost.
+  # """
+  local tpl_dir=$1
+  local default_vhost_config=${DEFAULT_VHOST:-}
+  local default_vhost_mode=$(echo $default_vhost_config | jq -r .mode)
+
+  local tpl_file=$tpl_dir/vhost_default$default_vhost_suffix.tpl
+  local vhost_file="/etc/nginx/sites-enabled/default"
+
+  _log "'default' vhost"
+
+  # set the default template suffix
+  default_vhost_suffix=""
+  if [ "$default_vhost_mode" != "" ]; then
+    default_vhost_suffix="-"$default_vhost_mode
+  fi
+
+  # check if the default template file exists
+  if [ ! -f $tpl_file ]; then
+    _error "template file '$tpl_file' doesn't exists"
+  fi
+
+  # if redirect template is selected, check if redirection URL is given
+  if [ "$default_vhost_mode" == "redirect" ]; then
+    local default_vhost_redirect_url=$(echo $default_vhost_config | jq -r .redirect_url)
+    if [ "$default_vhost_redirect_url" == "" ]; then
+      _error "'redirect_url' attribute is not defined"
+    fi
+  fi
+
+  _debug "=> based on template '$tpl_file'"
+  cp $tpl_file /etc/nginx/sites-enabled/default
+  sed -i -e 's|{{ REDIRECT_URL }}|'$default_vhost_redirect_url'|g' \
+      $vhost_file
+  _debug "=> '$vhost_file' has been written"
+}
+
+set_additionnal_vhosts(){
+  # """
+  # Additionnals vhosts.
+  # """
+  local tpl_dir=$1
+  local customer=$2
+  local vhosts_config=${VHOSTS:-}
+
+  if [ -n "${VHOSTS}" ]; then
+    vhost_index=0
+
+    for i in $(echo $VHOSTS | jq -r '.[] | .hostname'); do
+      # get config parameters
+      vhost_hostname=$(echo $VHOSTS | jq -r '.['$vhost_index'].hostname')
+      vhost_tpl=$(echo $VHOSTS | jq -r '.['$vhost_index'].template')
+      vhost_php_backend=$(echo $VHOSTS | jq -r '.['$vhost_index'].php_backend')
+      vhost_root=$(echo $VHOSTS | jq -r '.['$vhost_index'].root')
+      # set template and vhost filenames
+      tpl_file="$tpl_dir/vhost_$vhost_tpl.tpl"
+      vhost_file="/etc/nginx/sites-enabled/$vhost_hostname"
+
+      _log "'$vhost_hostname' vhost"
+
+      # take the "global" PHP_BACKEND
+      # if no 'php_backend' is given for the current vhost
+      if [ $vhost_php_backend == "null" ]; then
+        vhost_php_backend=${PHP_BACKEND:-<null>}
+      fi
+
+      # check if the template file exists
+      if [ ! -f $tpl_file ]; then
+        _warning "template file '$tpl_file' doesn't exists"
+      else
+        _debug "=> based on template '$tpl_file'"
+        # if no 'vhost_root' is defined set a default
+        # location based on 'customer' and "vhost_hostname"
+        if [ $vhost_root == "null" ]; then
+          vhost_root="/home/"$customer"/data/www/"$vhost_hostname"/drupal"
+        fi
+        # write the vhost configuration
+        cp $tpl_file /etc/nginx/sites-enabled/$vhost_hostname
+        sed -i \
+            -e 's|{{ HOSTNAME }}|'$vhost_hostname'|g' \
+            -e 's|{{ ROOT }}|'$vhost_root'|g' \
+            -e 's|{{ CUSTOMER }}|'$customer'|g' \
+            -e 's|{{ PHP_BACKEND }}|'$vhost_php_backend'|g' \
+            $vhost_file
+        _debug "=> '$vhost_file' has been written"
+      fi
+
+      let vhost_index+=1
+    done
+  fi
+}
+
 activate_service(){
   # """
   # Activate the given service.
@@ -123,6 +228,7 @@ main(){
 
   check_user $@
   configure_nginx $1
+  configure_nginx_vhost $1
   configure_runit $1
   activate_service "nginx"
   start_runit
