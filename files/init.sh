@@ -113,7 +113,6 @@ set_default_vhost(){
   local default_vhost_config=${DEFAULT_VHOST:-}
   local default_vhost_mode=$(echo $default_vhost_config | jq -r .mode)
 
-  local tpl_file=$tpl_dir/vhost_default$default_vhost_suffix.tpl
   local vhost_file="/etc/nginx/sites-enabled/default"
 
   _log "'default' vhost"
@@ -123,6 +122,7 @@ set_default_vhost(){
   if [ "$default_vhost_mode" != "" ]; then
     default_vhost_suffix="-"$default_vhost_mode
   fi
+  local tpl_file=$tpl_dir/vhost_default$default_vhost_suffix.tpl
 
   # check if the default template file exists
   if [ ! -f $tpl_file ]; then
