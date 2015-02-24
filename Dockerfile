@@ -16,6 +16,7 @@ ADD files/vhost_default.tpl /tmp/nginx-tpl/
 ADD files/vhost_default-redirect.tpl /tmp/nginx-tpl/
 ADD files/vhost_drupal7.tpl /tmp/nginx-tpl/
 ADD files/vhost_redirect.tpl /tmp/nginx-tpl/
+ADD files/vhost_rproxy.tpl /tmp/nginx-tpl/
 
 # Add init script
 ADD files/init.sh /init.sh
