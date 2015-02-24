@@ -12,7 +12,7 @@ server {
   index index.php index.html;
 
   # Customer specific rules
-  include /home/{{ CUSTOMER }}/config/nginx/{{ HOSTNAME }}/*;
+  include /home/{{ CUSTOMER }}/config/nginx/{{ HOSTNAME }}/*.active;
 
   location = /favicon.ico {
     log_not_found off;
