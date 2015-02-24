@@ -3,7 +3,7 @@ server {
 
   server_name {{ HOSTNAME }};
 
-  access_log /var/log/nginx/{{ HOSTNAME }}-access.log;
+  access_log /var/log/nginx/{{ HOSTNAME }}-access.log main;
   error_log /var/log/nginx/{{ HOSTNAME }}-error.log;
 
   client_max_body_size 24M;
