@@ -161,6 +161,7 @@ set_additionnal_vhosts(){
       vhost_tpl=$(echo $VHOSTS | jq -r '.['$vhost_index'].template')
       vhost_php_backend=$(echo $VHOSTS | jq -r '.['$vhost_index'].php_backend')
       vhost_root=$(echo $VHOSTS | jq -r '.['$vhost_index'].root')
+      vhost_redirect_hostname=$(echo $VHOSTS | jq -r '.['$vhost_index'].redirect_hostname')
       # set template and vhost filenames
       tpl_file="$tpl_dir/vhost_$vhost_tpl.tpl"
       vhost_file="/etc/nginx/sites-enabled/$vhost_hostname"
@@ -190,6 +191,7 @@ set_additionnal_vhosts(){
             -e 's|{{ ROOT }}|'$vhost_root'|g' \
             -e 's|{{ CUSTOMER }}|'$customer'|g' \
             -e 's|{{ PHP_BACKEND }}|'$vhost_php_backend'|g' \
+            -e 's|{{ REDIRECT_HOSTNAME }}|'$vhost_redirect_hostname'|g' \
             $vhost_file
         _debug "=> '$vhost_file' has been written"
       fi
