@@ -158,6 +158,7 @@ set_additionnal_vhosts(){
     for i in $(echo $VHOSTS | jq -r '.[] | .hostname'); do
       # get config parameters
       vhost_hostname=$(echo $VHOSTS | jq -r '.['$vhost_index'].hostname')
+      vhost_hostname_aliases=$(echo $VHOSTS | jq -r '.['$vhost_index'].hostname_aliases')
       vhost_tpl=$(echo $VHOSTS | jq -r '.['$vhost_index'].template')
       vhost_php_backend=$(echo $VHOSTS | jq -r '.['$vhost_index'].php_backend')
       vhost_root=$(echo $VHOSTS | jq -r '.['$vhost_index'].root')
@@ -185,10 +186,17 @@ set_additionnal_vhosts(){
         if [ $vhost_root == "null" ]; then
           vhost_root="/home/"$customer"/data/www/"$vhost_hostname"/drupal"
         fi
+
+        # if 'vhost_hostname_aliases' is null set to empty string
+        if [ $vhost_hostname_aliases == "null" ]; then
+          vhost_hostname_aliases=""
+        fi
+
         # write the vhost configuration
         cp $tpl_file /etc/nginx/sites-enabled/$vhost_hostname
         sed -i \
             -e 's|{{ HOSTNAME }}|'$vhost_hostname'|g' \
+            -e 's|{{ HOSTNAME_ALIASES }}|'$vhost_hostname_aliases'|g' \
             -e 's|{{ ROOT }}|'$vhost_root'|g' \
             -e 's|{{ CUSTOMER }}|'$customer'|g' \
             -e 's|{{ PHP_BACKEND }}|'$vhost_php_backend'|g' \
