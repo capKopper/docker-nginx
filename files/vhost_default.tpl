@@ -1,7 +1,7 @@
 server {
   listen 8080;
 
-  server_name _;
+  server_name _ default_server;
 
   location / {
     root /usr/share/nginx/html;
