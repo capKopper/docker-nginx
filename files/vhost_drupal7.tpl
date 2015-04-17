@@ -108,7 +108,7 @@ server {
     tcp_nodelay off;
     # Set the OS file cache.
     open_file_cache max=3000 inactive=120s;
-    open_file_cache_valid 45s;
+    open_file_cache_valid {{ STATIC_CACHE_TTL }};
     open_file_cache_min_uses 2;
     open_file_cache_errors off;
   }
