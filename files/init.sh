@@ -66,6 +66,14 @@ configure_nginx(){
     _debug "removing files into /var/log/nginx"
     rm -fr /var/log/nginx/*
   fi
+
+
+  # set some parameters in /etc/nginx/nginx.conf file
+  _debug "set parameters in nginx global configuration"
+
+  local sendfile_config=${SENDFILE:-on}
+  _debug "=> sendfile set to '$sendfile_config'"
+  sed -i -e 's|{{ SENDFILE }}|'$sendfile_config'|g' /etc/nginx/nginx.conf
 }
 
 configure_runit(){
@@ -164,6 +172,10 @@ set_additionnal_vhosts(){
       vhost_root=$(echo $VHOSTS | jq -r '.['$vhost_index'].root')
       vhost_redirect_hostname=$(echo $VHOSTS | jq -r '.['$vhost_index'].redirect_hostname')
       vhost_rproxy_upstream_server=$(echo $VHOSTS | jq -r '.['$vhost_index'].rproxy_upstream_server')
+      vhost_static_cache_ttl=$(echo $VHOSTS | jq -r '.['$vhost_index'].static_cache_ttl')
+      if [ $vhost_static_cache_ttl == "null" ]; then
+        vhost_static_cache_ttl="45s"
+      fi
       # set template and vhost filenames
       tpl_file="$tpl_dir/vhost_$vhost_tpl.tpl"
       vhost_file="/etc/nginx/sites-enabled/$vhost_hostname"
@@ -202,6 +214,7 @@ set_additionnal_vhosts(){
             -e 's|{{ PHP_BACKEND }}|'$vhost_php_backend'|g' \
             -e 's|{{ REDIRECT_HOSTNAME }}|'$vhost_redirect_hostname'|g' \
             -e 's|{{ RPROXY_UPSTREAM_SERVER }}|'$vhost_rproxy_upstream_server'|g' \
+            -e 's|{{ STATIC_CACHE_TTL }}|'$vhost_static_cache_ttl'|g' \
             $vhost_file
         _debug "=> '$vhost_file' has been written"
       fi
