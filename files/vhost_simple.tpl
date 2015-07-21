@@ -7,4 +7,6 @@ server {
   error_log /var/log/nginx/{{ HOSTNAME }}-error.log;
 
   root {{ ROOT }};
+
+  index index.html index.htm;
 }
