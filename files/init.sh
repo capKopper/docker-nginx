@@ -170,7 +170,12 @@ set_additionnal_vhosts(){
       vhost_tpl=$(echo $VHOSTS | jq -r '.['$vhost_index'].template')
       vhost_php_backend=$(echo $VHOSTS | jq -r '.['$vhost_index'].php_backend')
       vhost_root=$(echo $VHOSTS | jq -r '.['$vhost_index'].root')
+      # specific for the 'redirect' template
       vhost_redirect_hostname=$(echo $VHOSTS | jq -r '.['$vhost_index'].redirect_hostname')
+      vhost_redirect_scheme=$(echo $VHOSTS | jq -r '.['$vhost_index'].redirect_scheme')
+      if [ $vhost_redirect_scheme == "null" ]; then
+        vhost_redirect_scheme="http"
+      fi
       vhost_rproxy_upstream_server=$(echo $VHOSTS | jq -r '.['$vhost_index'].rproxy_upstream_server')
       vhost_static_cache_ttl=$(echo $VHOSTS | jq -r '.['$vhost_index'].static_cache_ttl')
       if [ $vhost_static_cache_ttl == "null" ]; then
@@ -213,6 +218,7 @@ set_additionnal_vhosts(){
             -e 's|{{ CUSTOMER }}|'$customer'|g' \
             -e 's|{{ PHP_BACKEND }}|'$vhost_php_backend'|g' \
             -e 's|{{ REDIRECT_HOSTNAME }}|'$vhost_redirect_hostname'|g' \
+            -e 's|{{ REDIRECT_SCHEME }}|'$vhost_redirect_scheme'|g' \
             -e 's|{{ RPROXY_UPSTREAM_SERVER }}|'$vhost_rproxy_upstream_server'|g' \
             -e 's|{{ STATIC_CACHE_TTL }}|'$vhost_static_cache_ttl'|g' \
             $vhost_file
