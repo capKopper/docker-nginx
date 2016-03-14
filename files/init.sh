@@ -176,7 +176,12 @@ set_additionnal_vhosts(){
       if [ $vhost_redirect_scheme == "null" ]; then
         vhost_redirect_scheme="http"
       fi
+      # specific for the 'rproxy' template
       vhost_rproxy_upstream_server=$(echo $VHOSTS | jq -r '.['$vhost_index'].rproxy_upstream_server')
+      vhost_rproxy_client_max_body_size=$(echo $VHOSTS | jq -r '.['$vhost_index'].rproxy_client_max_body_size')
+      if [ $vhost_rproxy_client_max_body_size == "null" ]; then
+        vhost_rproxy_client_max_body_size="2M"
+      fi
       vhost_static_cache_ttl=$(echo $VHOSTS | jq -r '.['$vhost_index'].static_cache_ttl')
       if [ $vhost_static_cache_ttl == "null" ]; then
         vhost_static_cache_ttl="45s"
@@ -220,6 +225,7 @@ set_additionnal_vhosts(){
             -e 's|{{ REDIRECT_HOSTNAME }}|'$vhost_redirect_hostname'|g' \
             -e 's|{{ REDIRECT_SCHEME }}|'$vhost_redirect_scheme'|g' \
             -e 's|{{ RPROXY_UPSTREAM_SERVER }}|'$vhost_rproxy_upstream_server'|g' \
+            -e 's|{{ RPROXY_CLIENT_MAX_BODY_SIZE }}|'$vhost_rproxy_client_max_body_size'|g' \
             -e 's|{{ STATIC_CACHE_TTL }}|'$vhost_static_cache_ttl'|g' \
             $vhost_file
         _debug "=> '$vhost_file' has been written"
