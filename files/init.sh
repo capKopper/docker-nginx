@@ -186,6 +186,7 @@ set_additionnal_vhosts(){
       if [ $vhost_static_cache_ttl == "null" ]; then
         vhost_static_cache_ttl="45s"
       fi
+
       # set template and vhost filenames
       tpl_file="$tpl_dir/vhost_$vhost_tpl.tpl"
       vhost_file="/etc/nginx/sites-enabled/$vhost_hostname"
