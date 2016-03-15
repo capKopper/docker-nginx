@@ -20,6 +20,9 @@ server {
   # informations about the backend server
   add_header X-Backend-Server $upstream_addr;
 
+  # maximum client body request size
+  client_max_body_size {{ RPROXY_CLIENT_MAX_BODY_SIZE }};
+
   location / {
     proxy_pass http://{{ HOSTNAME }}_backend;
   }
